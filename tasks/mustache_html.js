@@ -25,6 +25,7 @@ module.exports = function(grunt) {
 
     var fs = require('fs'),
         hogan = require('hogan.js'),
+        Mustache = require('mustache'),
         jstSuffix = '.' + options.type,
         matcher = new RegExp('\\' + jstSuffix + '$');
 
@@ -37,12 +38,23 @@ module.exports = function(grunt) {
         partials = render(partialPath),
         pages = render(pagePath, partials);
 
-    var layoutSrc = grunt.file.read(layoutPath),
-        layout = hogan.compile(layoutSrc, { sectionTags: [{o:'_i', c:'i'}] });
+    var layoutSrc = grunt.file.read(layoutPath);
+ 
+
+       // console.log(layout);
+       // 
+       //console.log(partials);
+       //console.log(pages);
+
 
     each(pages, function (page, name) {
         partials.content = page;
-        page = layout.render(pageData[name] || {}, partials);
+
+        console.log(layoutSrc);
+  
+        page = Mustache.render(layoutSrc,  globals, partials);
+
+        console.log(page);
         grunt.file.write(options.dist  + '/' + name + '.html', page);
     });
 
@@ -58,8 +70,10 @@ module.exports = function(grunt) {
                 locals = merge({}, globals),
                 data   = {};
 
-            var templateSrc = grunt.file.read(abspath),
-                template = hogan.compile(templateSrc, { sectionTags: [{o:'_i', c:'i'}] });
+            var templateSrc = grunt.file.read(abspath);
+
+            //console.log(templateSrc);
+          
 
             if (grunt.file.exists(dataPath)) {
                 data = JSON.parse(grunt.file.read(dataPath), function (key, value) {
@@ -76,8 +90,14 @@ module.exports = function(grunt) {
                 pageData[name] = locals;
             }
 
-            pages[name] = template.render(locals, partials);
+
+            pages[name] = Mustache.render(templateSrc, locals, partials);
+
+
+
         });
+
+        //console.log(pages);
         return pages;
     }
 
